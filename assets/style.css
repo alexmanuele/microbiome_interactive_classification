@@ -1,0 +1,13 @@
+#gg-otu-slider > .rc-slider > .rc-slider-track{
+    background-color: #636EFA
+}
+#gg-taxa-slider > .rc-slider > .rc-slider-track{
+  background-color: #EF553B;
+}
+#refseq-otu-slider > .rc-slider > .rc-slider-track{
+  background-color: #00CC96;
+}
+
+#refseq-taxa-slider > .rc-slider > .rc-slider-track{
+  background-color: #AB63FA;
+}

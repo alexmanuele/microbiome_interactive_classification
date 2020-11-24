@@ -1,0 +1,6 @@
+*.ipynb
+datasets/IBD_Gevers/*
+datasets/plant_v_animal/*
+datasets/usa_vs_malawi/*
+*/__pycache__/*
+__pycache__/*

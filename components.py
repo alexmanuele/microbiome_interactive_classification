@@ -10,8 +10,8 @@ def make_navbar(active=0):
 
     navbar = dbc.NavbarSimple(
         children=[
-            dbc.NavItem(dbc.NavLink("Data Summary", href="/apps/app1"), className=classnames[0]),
-            dbc.NavItem(dbc.NavLink("Machine Learning", href="/apps/app2"),className=classnames[1]),
+            dbc.NavItem(dbc.NavLink("Data Summary", href="/page-1"), className=classnames[0]),
+            dbc.NavItem(dbc.NavLink("Machine Learning", href="page-2"),className=classnames[1]),
         ],
         brand="Vizomics",
         brand_href="#",

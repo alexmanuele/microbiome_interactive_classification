@@ -20,18 +20,17 @@ datasets = {path: load_dataset(path) for path in data_paths}
 ### Page Layouts                                                             ###
 ################################################################################
 
-### Entry Point ###
+### Entry Point. Also Serves as data dump for sharing between apps  ###
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content')
-])
-
-### Data Preprocessing Layout ###
-page1_layout = dbc.Container(fluid=True,children=[
+    #Stores for data persistence.
+    dcc.Store(id='selected-dataset', storage_type='session'),
+    dcc.Store(id='slider-values', storage_type='session'),
+    #html.Div(id='selected-dataset', style={'display':'none'}),
+    #html.Div(id='slider-values', style={'display':'none'}),
     make_navbar(active=0),
     make_dataset_dropdown(id='summary-dataset-dropdown'),
-    html.Div(id='app-1-display-value'),
-    dbc.Row([
+    dbc.Row(id='data-sliders',children=[
         dbc.Col([
             dcc.Graph(id='feature-boxplot'),
             html.H5('Use sliders to remove features based on their frequencies.'),
@@ -46,6 +45,11 @@ page1_layout = dbc.Container(fluid=True,children=[
 
         ]),
     ]),
+    html.Div(id='page-content'),
+])
+
+### Data Preprocessing Layout ###
+page1_layout = dbc.Container(fluid=True,children=[
     dbc.Row([
         dbc.Col(id='otu-gg-table'),
         dbc.Col(id='taxa-gg-table'),
@@ -56,9 +60,7 @@ page1_layout = dbc.Container(fluid=True,children=[
 ])
 ### Machine Learning Layout ###
 page2_layout = dbc.Container(fluid=True,children=[
-    make_navbar(active=1),
     html.H3('App 2'),
-    make_dataset_dropdown(id='ml-dataset-dropdown'),
     html.Div(id='app-2-display-value'),
     dcc.Link('Go to App 1', href='/apps/app1')
 ])
@@ -86,8 +88,8 @@ page2_layout = dbc.Container(fluid=True,children=[
     Output('refseq-taxa-slider', 'min'),
     Output('refseq-taxa-slider', 'max'),
     Output('refseq-taxa-slider', 'value'),
-    Output('refseq-taxa-slider', 'disabled')],
-    [Input('summary-dataset-dropdown', 'value')]
+    Output('refseq-taxa-slider', 'disabled'),],
+    [Input('summary-dataset-dropdown', 'value'),]
 )
 def update_dataset(value):
     if value:
@@ -96,24 +98,20 @@ def update_dataset(value):
         taxa_gg_ff = get_feature_frequencies(dataset['greengenes']['taxa'])
         otu_refseq_ff = get_feature_frequencies(dataset['refseq']['otu'])
         taxa_refseq_ff = get_feature_frequencies(dataset['refseq']['taxa'])
-        """
-        fig = go.Figure()
-        fig.add_trace(go.Box(y=otu_gg_ff, name='OTU Greengenes'))
-        fig.add_trace(go.Box(y=taxa_gg_ff, name='Taxa Greengenes'))
-        fig.add_trace(go.Box(y=otu_refseq_ff, name='OTU Refseq'))
-        fig.add_trace(go.Box(y=taxa_refseq_ff, name='Taxa Refseq'))
-        """
+
 
         return (otu_gg_ff.min(), otu_gg_ff.max(), [otu_gg_ff.min(), otu_gg_ff.max(),], False,
                 taxa_gg_ff.min(), taxa_gg_ff.max(), [taxa_gg_ff.min(), taxa_gg_ff.max(),], False,
                 otu_refseq_ff.min(), otu_refseq_ff.max(), [otu_refseq_ff.min(), otu_refseq_ff.max(),], False,
-                taxa_refseq_ff.min(), taxa_refseq_ff.max(), [taxa_refseq_ff.min(), taxa_refseq_ff.max()], False
+                taxa_refseq_ff.min(), taxa_refseq_ff.max(), [taxa_refseq_ff.min(), taxa_refseq_ff.max()], False,
+
                 )
+
 
     return ( 1,10,[1,10], True,
             1,10,[1,10], True,
             1,10,[1,10], True,
-            1,10,[1,10], True)
+            1,10,[1,10], True,)
 
 #Callbacks for updating box plot
 @app.callback(
@@ -149,16 +147,20 @@ def update_plot(gg_otu, gg_taxa, refseq_otu, refseq_taxa, dataname):
 ### Page Navigation callbacks                                                ###
 ################################################################################
 @app.callback(
-    Output('page-content', 'children'),
-    [Input('url', 'pathname')]
+    [Output('page-content', 'children'),
+    Output('page-1-nav', 'className'),
+    Output('page-2-nav', 'className'),
+    Output('summary-dataset-dropdown', 'style'),
+    Output('data-sliders', 'style')],
+    [Input('url', 'pathname'),]
 )
 def display_page(pathname):
     if pathname == '/page-1':
-        return page1_layout
+        return page1_layout, 'active', '', {'display': 'block'}, {'display': 'block'}
     elif pathname == '/page-2':
-        return page2_layout
+        return page2_layout, '', 'active', {'display': 'none'}, {'display': 'none'}
     else:
-        return html.H3('Nothing here')
+        return html.H3('Nothing here'), '', '',  {'display': 'none'}, {'display': 'none'}
 
 
 if __name__ == '__main__':

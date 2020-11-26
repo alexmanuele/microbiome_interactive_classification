@@ -12,6 +12,16 @@ from sklearn.model_selection import GridSearchCV
 import plotly.express as px
 import plotly.graph_objects as go
 
+#The datasets from Knight et al are sometimes agglomerated from several tasks
+# remove rows and columns with only zeros.
+def drop_zeros(df):
+    val_cols = [col for col in df if col not in ['#SampleID', 'label']]
+    #drop rows with all zeros. There shouldnt be any but just in case.
+    df = df.loc[~(df[val_cols]==0).all(axis=1)]
+    #drop columns with all zeros.
+    df = df.loc[:, (df!=0).any(axis=0)]
+    return df
+
 # Returns four dataframes: OTU representation and Taxa represntation form both greengenes and refseq.
 def load_dataset(directory):
     dir_path = "datasets/{}/".format(directory)
@@ -30,15 +40,6 @@ def load_dataset(directory):
         df = df.drop(df.index[0])
         return df
 
-    #The datasets from Knight et al are sometimes agglomerated from several tasks
-    # remove rows and columns with only zeros.
-    def drop_zeros(df):
-        val_cols = [col for col in df if col not in ['#SampleID', 'label']]
-        #drop rows with all zeros. There shouldnt be any but just in case.
-        df = df.loc[~(df[val_cols]==0).all(axis=1)]
-        #drop columns with all zeros.
-        df = df.loc[:, (df!=0).any(axis=0)]
-        return df
 
     otu_gg = reformat_table(pd.read_table(otu_gg_path))
     otu_rf = reformat_table(pd.read_table(otu_rf_path))
@@ -60,6 +61,32 @@ def get_feature_frequencies(df):
     value_cols = [col for col in df.columns if col not in ['#SampleID', 'label']]
     feature_sum = df[value_cols].sum(axis=0).values
     return feature_sum
+
+def feature_stats(df, lower, upper):
+    value_cols = [col for col in df.columns if col not in ['#SampleID', 'label']]
+    feature_sum = df[value_cols].sum(axis=0).values
+    mask = list((feature_sum >= lower) & (feature_sum <= upper))
+    mask = [True, True] + mask
+
+    filtered_data = drop_zeros(df[[col for i, col in enumerate(df.columns) if mask[i]]])
+
+    n_samples = filtered_data.shape[0]
+
+    filtered_features = filtered_data[[col for col in filtered_data.columns if col not in ['#SampleID', 'label']]].sum(axis=0).values
+
+    n_features = filtered_features.shape[0]
+    mean = filtered_features.mean()
+    quartiles = np.quantile(filtered_features, q=[0.25,0.5,0.75])
+    maxi = filtered_features.max()
+    mini = filtered_features.min()
+    avg_per_sample = filtered_data[[col for col in filtered_data.columns if col not in ['#SampleID', 'label']]].sum(axis=1).mean()
+
+    data = {'Attribute': ["n Samples", 'n Features', 'Minimum Feature Freq.', '1st Quartile Feature Freq.',
+                          'Median Feature Freq.', '3rd Quartile Feature Freq.', 'Max Feature Freq',
+                          'Avg. Total Feature Freq./Sample'
+                         ],
+           'Value': [n_samples, n_features, mini, quartiles[0], quartiles[1], quartiles[2], maxi, avg_per_sample]}
+    return pd.DataFrame(data), filtered_features
 
 #Expects datasets as formatted from load_dataset.
 def dataset_to_X_y(data, encode_labels=False):

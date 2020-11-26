@@ -5,6 +5,7 @@ import pandas as pd
 
 import dash
 from dash.dependencies import Output, Input, State
+import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
@@ -62,10 +63,10 @@ app.layout = html.Div([
 ### Data Preprocessing Layout ###
 page1_layout = dbc.Container(fluid=True,children=[
     dbc.Row([
-        dbc.Col(id='otu-gg-table'),
-        dbc.Col(id='taxa-gg-table'),
-        dbc.Col(id='otu-refseq-table'),
-        dbc.Col(id='taxa-refseq-table'),
+        dbc.Col(id='otu-gg-table', width=3,),
+        dbc.Col(id='taxa-gg-table', width=3,),
+        dbc.Col(id='otu-refseq-table',width=3,),
+        dbc.Col(id='taxa-refseq-table',width=3),
     ]),
 
 ])
@@ -248,9 +249,13 @@ def update_dataset(value):
             1,10,[1,10], True,
             1,10,[1,10], True,)
 
-#Callbacks for updating box plot
+#Callbacks for updating box plot and tables
 @app.callback(
-    Output('feature-boxplot', 'figure'),
+    [Output('feature-boxplot', 'figure'),
+    Output('otu-gg-table', 'children'),
+    Output('taxa-gg-table', 'children'),
+    Output('otu-refseq-table', 'children'),
+    Output('taxa-refseq-table', 'children'),],
     [Input('gg-otu-slider', 'value'),
     Input('gg-taxa-slider','value'),
     Input('refseq-otu-slider', 'value'),
@@ -260,23 +265,45 @@ def update_dataset(value):
 def update_plot(gg_otu, gg_taxa, refseq_otu, refseq_taxa, dataname):
     if dataname:
         dataset = datasets[dataname]
-        otu_gg_ff = get_feature_frequencies(dataset['greengenes']['otu'])
-        taxa_gg_ff = get_feature_frequencies(dataset['greengenes']['taxa'])
-        otu_refseq_ff = get_feature_frequencies(dataset['refseq']['otu'])
-        taxa_refseq_ff = get_feature_frequencies(dataset['refseq']['taxa'])
+        otu_gg_stats, otu_gg_ff = feature_stats(dataset['greengenes']['otu'], gg_otu[0], gg_otu[1])
+        taxa_gg_stats, taxa_gg_ff = feature_stats(dataset['greengenes']['taxa'], gg_taxa[0], gg_taxa[1])
+        otu_refseq_stats, otu_refseq_ff = feature_stats(dataset['refseq']['otu'], refseq_otu[0], refseq_otu[1])
+        taxa_refseq_stats, taxa_refseq_ff = feature_stats(dataset['refseq']['taxa'], refseq_otu[0], refseq_otu[1])
+
         # get formatted.
-        otu_gg_ff = otu_gg_ff[(otu_gg_ff > gg_otu[0])&(otu_gg_ff<gg_otu[1])]
-        taxa_gg_ff = taxa_gg_ff[(taxa_gg_ff > gg_taxa[0])&(taxa_gg_ff<gg_taxa[1])]
-        otu_refseq_ff = otu_refseq_ff[(otu_refseq_ff > refseq_otu[0])&(otu_refseq_ff < refseq_otu[1])]
-        taxa_refseq_ff = taxa_refseq_ff[(taxa_refseq_ff > refseq_taxa[0])&(taxa_refseq_ff<refseq_taxa[1])]
+
         #Plot
         fig = go.Figure()
         fig.add_trace(go.Box(y=otu_gg_ff, name='OTU Greengenes'))
         fig.add_trace(go.Box(y=taxa_gg_ff, name='Taxa Greengenes'))
         fig.add_trace(go.Box(y=otu_refseq_ff, name='OTU Refseq'))
         fig.add_trace(go.Box(y=taxa_refseq_ff, name='Taxa Refseq'))
-        return fig
-    return {}
+
+        #tables
+        table_formats = [(otu_gg_stats, '#636EFA'),
+                         (taxa_gg_stats, '#EF553B'),
+                         (otu_refseq_stats, '#00CC96'),
+                         (taxa_refseq_stats, '#AB63FA')]
+
+        tables = []
+        for format in table_formats:
+            tables.append( dash_table.DataTable(
+                data = format[0].to_dict('records'),
+                columns = [{'id':c, 'name':c} for c in format[0].columns],
+                style_as_list_view=True,
+                style_cell={'textAlign':'center'},
+                style_header={
+                    'backgroundColor': format[1],
+                    'fontWeight': 'bold'
+                },
+
+            ))
+
+        return fig, tables[0], tables[1], tables[2], tables[3]
+    return {}, [], [], [], []
+
+
+
 ################################################################################
 ### Machine learning callbacks                                               ###
 ################################################################################

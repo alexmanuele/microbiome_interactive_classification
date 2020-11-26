@@ -1,3 +1,5 @@
+import itertools as it
+
 import numpy as np
 import pandas as pd
 
@@ -348,7 +350,7 @@ def manage_param_fields(value):
     State('feature-selection', 'value'),
     State('n-features', 'value'),
     #Selected dataset and features
-    State('selected-dataset', 'value'),
+    State('summary-dataset-dropdown', 'value'),
     State('gg-otu-slider', 'value'),
     State('gg-taxa-slider', 'value'),
     State('refseq-otu-slider', 'value'),
@@ -358,7 +360,7 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
     svc_penalty, svc_loss, svc_c,
     nb_alpha, nb_prior,
     feature_selection, n_features,
-    dataset, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff):
+    dataset_sel, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff):
     #Leave graph empty if no submit button.
     if not click:
         return {}
@@ -387,10 +389,17 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
             for param, value in input_dict[key].items():
                 if value:
                     params[key][param] = value
-    
+
+
+    #Get the dataset.
+    dataset = datasets[dataset_sel]
+    # Get results for each feature representation.
+    results = get_all_results(sel_models, params, dataset)
+    #Send result data.
+    bar_plot = bar_plot_best(results)
 
     #soon: make the params a thing.
-    return {}
+    return bar_plot
 
 ################################################################################
 ### Page Navigation callbacks                                                ###

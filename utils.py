@@ -1,10 +1,16 @@
+import itertools as it
 import pandas as pd
+import numpy as np
+
 from sklearn.preprocessing import LabelEncoder
 from sklearn.feature_selection import SelectKBest, chi2, mutual_info_classif
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB as NB
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
+
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Returns four dataframes: OTU representation and Taxa represntation form both greengenes and refseq.
 def load_dataset(directory):
@@ -72,7 +78,7 @@ def dataset_to_X_y(data, encode_labels=False):
 # Adapted from http://www.davidsbatista.net/blog/2018/02/23/model_optimization/
 # Let's you do sklearn GridSearchCV with multiple different models.
 class PipelineHelper:
-    def __init__(self, models, model_params):
+    def __init__(self, models, params):
         if not set(models.keys()).issubset(set(params.keys())):
             missing_params = list(set(models.keys()) - set(params.keys()))
             raise ValueError("Missing params for %s" % missing_params)
@@ -119,3 +125,35 @@ class PipelineHelper:
         columns = columns + [c for c in df.columns if c not in columns]
 
         return df[columns]
+
+#convenienc method for doing gridsearch for each feature representation.
+def get_all_results(models, params, dataset):
+    clf_results = {}
+    for feature_rep in it.product(['greengenes', 'refseq'], ['otu', 'taxa']):
+        data = dataset[feature_rep[0]][feature_rep[1]]
+        X, y = dataset_to_X_y(data)
+        gridsearch = PipelineHelper(models, params)
+        gridsearch.fit(X,y)
+        clf_results["{}_{}".format(*feature_rep)] = gridsearch
+    return clf_results
+
+def bar_plot_best(results):
+    x = []
+    y = []
+    hovertext= []
+    error_y = []
+    colors= ['#636EFA', '#EF553B', '#00CC96', '#AB63FA']
+    for trial in results:
+        clf = results[trial]
+        df = clf.score_summary()
+        best = clf.grid_searches[df.iloc[0]['estimator']].best_estimator_
+        description = df.iloc[0].dropna().to_dict()
+        desc_str = ""
+        for key, value in description.items():
+            desc_str += "{} : {}</br>".format(key, value)
+        x.append(trial)
+        y.append(description['mean_score'])
+        hovertext.append(desc_str)
+        error_y.append(description['std_score'])
+    fig = go.Figure(data=[go.Bar(x=x, y=y, hovertext=hovertext, error_y=dict(array=error_y), marker_color=colors)])
+    return fig

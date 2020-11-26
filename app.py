@@ -21,7 +21,7 @@ from sklearn.model_selection import GridSearchCV
 from components import *
 from utils import *
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],suppress_callback_exceptions=True)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY],suppress_callback_exceptions=True)
 
 #Update here if you add more datasets.
 data_paths = ['IBD_Gevers', 'plant_v_animal', 'usa_vs_malawi']
@@ -56,6 +56,34 @@ app.layout = html.Div([
     ]),
     html.Div(id='page-content'),
 ])
+
+### Landing Page ###
+#Adapted from https://getbootstrap.com/docs/4.0/examples/product/
+landing_page_layout = [
+    html.Div(className="position-relative overflow-hidden p-3 p-md-5 m-md-3 text-center bg-light",children=[
+        html.Div(className="col-md-5 p-lg-5 mx-auto my-5", children=[
+            html.H1('This is the title.', className="display-4 font-weight-normal"),
+            html.P("This is the description", className='lead font-weight-normal'),
+        ])
+    ]),
+    html.Div(className="d-md-flex flex-md-equal w-100 my-md-3 pl-md-3",children=[
+        html.Div(className="bg-dark mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center text-white overflow-hidden",children=[
+            html.Div(className="my-3 py-3", children=[
+                html.H2('This is the subtitle.', className='display-5'),
+                html.P('This is the sub description.', className='lead'),
+            ])
+        ]),
+        html.Div(className="bg-light mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden",children=[
+            html.Div(className="my-3 py-3", children=[
+                html.H2("The other Subtitle", className="display-5"),
+                html.P('This is the sub description.', className='lead'),
+            ])
+        ])
+    ]),
+
+]
+
+
 
 ### Data Preprocessing Layout ###
 page1_layout = dbc.Container(fluid=True,children=[
@@ -198,7 +226,7 @@ page2_layout = dbc.Container(fluid=True,children=[
                     ],
                     id='nb-params', style={'display':'none'},
                     ),
-            dbc.Button("Run GridSearch", id='submit-button', color="warning", disabled=True),
+            dbc.Button("Run GridSearch", id='submit-button', color="danger", disabled=True),
 
         ], width=4),
     ]),
@@ -524,7 +552,7 @@ def display_page(pathname):
     elif pathname == '/page-2':
         return page2_layout, '', 'active', {'display': 'none'}, {'display': 'none'}
     else:
-        return html.H3('Nothing here'), '', '',  {'display': 'none'}, {'display': 'none'}
+        return landing_page_layout, '', '',  {'display': 'none'}, {'display': 'none'}
 
 
 if __name__ == '__main__':

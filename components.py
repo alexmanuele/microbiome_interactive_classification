@@ -15,7 +15,7 @@ def make_navbar(active=0):
         ],
         brand="Vizomics",
         brand_href="#",
-        color="dark",
+        color="primary",
         dark=True,
     )
     return navbar

@@ -62,6 +62,7 @@ def get_feature_frequencies(df):
     feature_sum = df[value_cols].sum(axis=0).values
     return feature_sum
 
+
 def feature_stats(df, lower, upper):
     value_cols = [col for col in df.columns if col not in ['#SampleID', 'label']]
     feature_sum = df[value_cols].sum(axis=0).values
@@ -87,6 +88,22 @@ def feature_stats(df, lower, upper):
                          ],
            'Value': [n_samples, n_features, mini, quartiles[0], quartiles[1], quartiles[2], maxi, avg_per_sample]}
     return pd.DataFrame(data), filtered_features
+
+#Given upper and lower bounds from sliders, filters features from dataset.
+def filter_dataset(dataset, otu_gg, taxa_gg, otu_refseq, taxa_refseq):
+    order = [(otu_gg, 'greengenes', 'otu'),
+             (taxa_gg, 'greengenes', 'taxa'),
+             (otu_refseq, 'refseq', 'otu'),
+             (taxa_refseq, 'refseq', 'taxa')]
+    for op in order:
+        df = dataset[op[1]][op[2]]
+        value_cols = [col for col in df.columns if col not in ['#SampleID', 'label']]
+        feature_sum = df[value_cols].sum(axis=0).values
+        mask = list((feature_sum >= op[0][0]) & (feature_sum <= op[0][1]))
+        mask = [True, True] + mask
+        filtered_data = drop_zeros(df[[col for i, col in enumerate(df.columns) if mask[i]]])
+        dataset[op[1]][op[2]] = filtered_data
+    return dataset
 
 #Expects datasets as formatted from load_dataset.
 def dataset_to_X_y(data, encode_labels=False):

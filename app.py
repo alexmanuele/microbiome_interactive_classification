@@ -199,7 +199,9 @@ page2_layout = dbc.Container(fluid=True,children=[
 
         ], width=4),
     ]),
-])
+    dbc.Row(id='result-table-area'),
+]),
+
 
 
 ###############################################################################
@@ -359,7 +361,8 @@ def manage_param_fields(value):
 ### Compute Classification ###
 # Compute classification, create the resultant figures, and serialize them.
 @app.callback(
-    Output('ml-graph-area', 'figure'),
+    [Output('ml-graph-area', 'figure'),
+    Output('result-table-area', 'children')],
     [Input('submit-button', 'n_clicks'),
     #models
     State('models-select', 'value'),
@@ -390,7 +393,7 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
     dataset_sel, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff):
     #Leave graph empty if no submit button.
     if not click:
-        return {}
+        return {}, []
     #cast types for nb_prior, which is currently JS typed.
     if nb_prior:
         nb_prior = [True if e=='true' else False for e in nb_prior]
@@ -420,14 +423,73 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
 
     #Get the dataset.
     dataset = datasets[dataset_sel]
+    #Filter features based on selections from previous page
+    dataset = filter_dataset(dataset, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff)
     # Get results for each feature representation.
     results = get_all_results(sel_models, params, dataset)
+    #Make tables of the Results
+    frames = []
+    for key in results.keys():
+        df = results[key].score_summary()
+        df.insert(0, column='Representation', value=[key]*df.shape[0])
+        frames.append(df)
+    result_df = pd.concat(frames)
+    table = dash_table.DataTable(
+        data=result_df.to_dict('records'),
+        columns = [{'id':c, 'name':c} for c in result_df.columns],
+        style_as_list_view = True,
+        style_cell={'textAlign': 'left',
+                    'height': 'auto',
+        },
+        style_header={'fontWeight': 'bold'},
+        style_data_conditional=[
+            {
+                'if':{
+                    'filter_query': '{Representation} = "greengenes_otu"',
+                },
+                'backgroundColor':  ' #636EFA',
+            },
+            {
+                'if':{
+                    'filter_query': '{Representation} = "greengenes_taxa"',
+                },
+                'backgroundColor':  ' #EF553B',
+            },
+            {
+                'if':{
+                    'filter_query': '{Representation} = "refseq_otu"',
+                },
+                'backgroundColor':  ' #00CC96',
+            },
+            {
+                'if':{
+                    'filter_query': '{Representation} = "refseq_taxa"',
+                },
+                'backgroundColor':  ' #AB63FA',
+            },]
+    )
     #Send result data.
     bar_plot = bar_plot_best(results)
 
     #soon: make the params a thing.
-    return bar_plot
+    return bar_plot, table
 
+
+"""
+
+        tables.append( dash_table.DataTable(
+            data = format[0].to_dict('records'),
+            columns = [{'id':c, 'name':c} for c in format[0].columns],
+            style_as_list_view=True,
+            style_cell={'textAlign':'left'},
+            style_header={
+                'backgroundColor': format[1],
+                'fontWeight': 'bold'
+            },
+
+        ))
+
+"""
 ################################################################################
 ### Page Navigation callbacks                                                ###
 ################################################################################

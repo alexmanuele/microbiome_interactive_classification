@@ -14,7 +14,7 @@ def make_navbar(active=0):
             dbc.NavItem(dbc.NavLink("Classification", href="page-2"),id='page-2-nav', className=classnames[1]),
         ],
         brand="Vizomics",
-        brand_href="#",
+        brand_href="/",
         color="primary",
         dark=True,
     )

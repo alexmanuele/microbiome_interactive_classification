@@ -475,7 +475,8 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
     #Get the dataset.
     dataset = datasets[dataset_sel]
     #Filter features based on selections from previous page
-    dataset = filter_dataset(dataset, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff)
+    dataset = filter_dataset(dataset, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff,
+    feature_selection, n_features)
     # Get results for each feature representation.
     results = get_all_results(sel_models, params, dataset)
     #Make tables of the Results
@@ -488,11 +489,16 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
     table = dash_table.DataTable(
         data=result_df.to_dict('records'),
         columns = [{'id':c, 'name':c} for c in result_df.columns],
+        sort_action="native",
+        sort_mode='multi',
         style_as_list_view = True,
         style_cell={'textAlign': 'left',
                     'height': 'auto',
+                    'color': 'white',
         },
-        style_header={'fontWeight': 'bold'},
+        style_header={'fontWeight': 'bold',
+                      'color': 'black',
+        },
         style_data_conditional=[
             {
                 'if':{
@@ -517,7 +523,14 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
                     'filter_query': '{Representation} = "refseq_taxa"',
                 },
                 'backgroundColor':  ' #AB63FA',
-            },]
+            },
+            {
+                'if':{
+                    'state': 'selected'
+                },
+                'color':'black',
+            }
+            ]
     )
     #Send result data.
     bar = bar_plot_best(results)
@@ -525,22 +538,6 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
     #soon: make the params a thing.
     return {'bar':bar, 'scatter':scatter}, table
 
-
-"""
-
-        tables.append( dash_table.DataTable(
-            data = format[0].to_dict('records'),
-            columns = [{'id':c, 'name':c} for c in format[0].columns],
-            style_as_list_view=True,
-            style_cell={'textAlign':'left'},
-            style_header={
-                'backgroundColor': format[1],
-                'fontWeight': 'bold'
-            },
-
-        ))
-
-"""
 ################################################################################
 ### Page Navigation callbacks                                                ###
 ################################################################################

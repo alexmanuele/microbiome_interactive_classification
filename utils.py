@@ -90,11 +90,12 @@ def feature_stats(df, lower, upper):
     return pd.DataFrame(data), filtered_features
 
 #Given upper and lower bounds from sliders, filters features from dataset.
-def filter_dataset(dataset, otu_gg, taxa_gg, otu_refseq, taxa_refseq):
+#Also selects K best features, if given.
+def filter_dataset(dataset, otu_gg, taxa_gg, otu_refseq, taxa_refseq, fs_criteria=None, n_features=10):
     order = [(otu_gg, 'greengenes', 'otu'),
              (taxa_gg, 'greengenes', 'taxa'),
              (otu_refseq, 'refseq', 'otu'),
-             (taxa_refseq, 'refseq', 'taxa')]
+             (taxa_refseq, 'refseq', 'taxa'),]
     for op in order:
         df = dataset[op[1]][op[2]]
         value_cols = [col for col in df.columns if col not in ['#SampleID', 'label']]
@@ -102,7 +103,20 @@ def filter_dataset(dataset, otu_gg, taxa_gg, otu_refseq, taxa_refseq):
         mask = list((feature_sum >= op[0][0]) & (feature_sum <= op[0][1]))
         mask = [True, True] + mask
         filtered_data = drop_zeros(df[[col for i, col in enumerate(df.columns) if mask[i]]])
+        # Select K Best if specified.
+        if fs_criteria:
+            metric= {'chi2': chi2,
+                     'mi': mutual_info_classif}
+            print("Selecting k best")
+            X,y = dataset_to_X_y(filtered_data)
+            X_new = SelectKBest(metric[fs_criteria], k=n_features).fit_transform(X,y)
+            df = pd.DataFrame(data=X_new)
+            df.insert(0, column='label', value=filtered_data['label'])
+            df.insert(0, column='#SampleID', value=filtered_data['#SampleID'])
+            filtered_data = df
+
         dataset[op[1]][op[2]] = filtered_data
+
     return dataset
 
 #Expects datasets as formatted from load_dataset.

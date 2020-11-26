@@ -114,121 +114,123 @@ page2_layout = dbc.Container(fluid=True,children=[
             width=8),
         #Machine Learning Params Area
         dbc.Col(children=[
-            dcc.Dropdown(id='feature-selection',
-                        options=[
-                            {'label': "Chi2 Information Test", 'value':'chi2'},
-                            {'label': "Mutual Information (Entropy)", 'value': "mi"}
+            dbc.Card([
+                dbc.CardHeader('Select Parameters for GridSearch', className='bg-secondary text-white'),
+                dcc.Dropdown(id='feature-selection',
+                            options=[
+                                {'label': "Chi2 Information Test", 'value':'chi2'},
+                                {'label': "Mutual Information (Entropy)", 'value': "mi"}
+                            ],
+                            multi=False,
+                            placeholder="Choose feature selection algorithm or leave blank for none"
+                ),
+                dbc.Input(
+                    id='n-features',
+                    type='number',
+                    min=1,
+                    max=100,
+                    step=1,
+                    disabled=True,
+                    placeholder="N features"
+                ),
+                dcc.Dropdown(id='models-select',
+                             options=[
+                                {'label': "Random Forest", 'value':'RF'},
+                                {'label': "Naive Bayes", 'value': 'NB'},
+                                {'label': "Support Vector Machine", 'value': 'SVM'}
+                             ],
+                             multi=True,
+                             placeholder="Select models",
+                ),
+                #Ranfom Forest Params
+                dbc.Card(children=[
+                            dbc.CardHeader('Random Forest Parameters'),
+                            dbc.ListGroup(
+                                [
+                                    dbc.ListGroupItem(
+                                        [dcc.Dropdown(id='rf-criterion',
+                                            options=[
+                                                {'label': 'Gini Impurity', 'value':'gini'},
+                                                {'label': 'Entropy', 'value': 'entropy'}],
+                                            multi=True,
+                                            placeholder='Criteria'
+                                        )]),
+                                    dbc.ListGroupItem(
+                                        [dcc.Dropdown(id='rf-n-estimators',
+                                        options=[
+                                            {'label': '10', 'value': 10},
+                                            {'label': '50', 'value': 50},
+                                            {'label': '100', 'value': 100},
+                                            {'label': '500', 'value': 500},
+                                        ],
+                                        multi=True,
+                                        placeholder='N Estimators')]
+                                    ),
+                                ])
                         ],
-                        multi=False,
-                        placeholder="Choose feature selection algorithm or leave blank for none"
-            ),
-            dbc.Input(
-                id='n-features',
-                type='number',
-                min=1,
-                max=100,
-                step=1,
-                disabled=True,
-                placeholder="N features"
-            ),
-            dcc.Dropdown(id='models-select',
-                         options=[
-                            {'label': "Random Forest", 'value':'RF'},
-                            {'label': "Naive Bayes", 'value': 'NB'},
-                            {'label': "Support Vector Machine", 'value': 'SVM'}
-                         ],
-                         multi=True,
-                         placeholder="Select models",
-            ),
-            #Ranfom Forest Params
-            dbc.Card(children=[
-                        dbc.CardHeader('Random Forest Parameters'),
-                        dbc.ListGroup(
-                            [
-                                dbc.ListGroupItem(
-                                    [dcc.Dropdown(id='rf-criterion',
+                        id='rf-params', style={'display':'none'},
+                        ),
+                #SVC Params
+                dbc.Card(children=[
+                            dbc.CardHeader('SVC Parameters'),
+                            dbc.ListGroup(
+                                [
+                                    dbc.ListGroupItem(
+                                        [dcc.Dropdown(id='svc-kernel',
+                                            options=[
+                                                {'label': 'Linear', 'value':'linear'},
+                                                {'label': 'Polynomial', 'value': 'poly'},
+                                                {'label':'Radial Basis Function', 'value':'rbf'},
+                                                {'label':'Sigmoid', 'value': 'sigmoid'}, ],
+                                            multi=True,
+                                            placeholder='Kernel'
+                                        )]),
+                                    dbc.ListGroupItem(
+                                        [dcc.Dropdown(id='svc-c',
                                         options=[
-                                            {'label': 'Gini Impurity', 'value':'gini'},
-                                            {'label': 'Entropy', 'value': 'entropy'}],
+                                            {'label': '2^-3', 'value': 0.125},
+                                            {'label': '2^-2', 'value': 0.25},
+                                            {'label': '2^-1', 'value': 0.5},
+                                            {'label': '1', 'value': 1},
+                                            {'label': '2^2', 'value': 4},
+                                            {'label': '2^3', 'value': 8},
+                                            {'label': '2^4', 'value': 16},
+                                        ],
                                         multi=True,
-                                        placeholder='Criteria'
-                                    )]),
-                                dbc.ListGroupItem(
-                                    [dcc.Dropdown(id='rf-n-estimators',
-                                    options=[
-                                        {'label': '10', 'value': 10},
-                                        {'label': '50', 'value': 50},
-                                        {'label': '100', 'value': 100},
-                                        {'label': '500', 'value': 500},
-                                    ],
-                                    multi=True,
-                                    placeholder='N Estimators')]
-                                ),
-                            ])
-                    ],
-                    id='rf-params', style={'display':'none'},
-                    ),
-            #SVC Params
-            dbc.Card(children=[
-                        dbc.CardHeader('SVC Parameters'),
-                        dbc.ListGroup(
-                            [
-                                dbc.ListGroupItem(
-                                    [dcc.Dropdown(id='svc-kernel',
-                                        options=[
-                                            {'label': 'Linear', 'value':'linear'},
-                                            {'label': 'Polynomial', 'value': 'poly'},
-                                            {'label':'Radial Basis Function', 'value':'rbf'},
-                                            {'label':'Sigmoid', 'value': 'sigmoid'}, ],
-                                        multi=True,
-                                        placeholder='Kernel'
-                                    )]),
-                                dbc.ListGroupItem(
-                                    [dcc.Dropdown(id='svc-c',
-                                    options=[
-                                        {'label': '2^-3', 'value': 0.125},
-                                        {'label': '2^-2', 'value': 0.25},
-                                        {'label': '2^-1', 'value': 0.5},
-                                        {'label': '1', 'value': 1},
-                                        {'label': '2^2', 'value': 4},
-                                        {'label': '2^3', 'value': 8},
-                                        {'label': '2^4', 'value': 16},
-                                    ],
-                                    multi=True,
-                                    placeholder='C')]
-                                ),
-                            ])
-                    ],
-                    id='svc-params', style={'display':'none'},
-                    ),
-            #Naive Bayes Params
-            dbc.Card(children=[
-                        dbc.CardHeader('Naive Bayes Parameters'),
-                        dbc.ListGroup(
-                            [
-                                dbc.ListGroupItem(
-                                    [dcc.Dropdown(id='nb-alpha',
-                                        options=[
-                                            {'label': 'No smoothing', 'value': 0},
-                                            {'label': 'Laplacian smoothing', 'value': 1}],
-                                        multi=True,
-                                        placeholder='Smoothing'
-                                    )]),
-                                dbc.ListGroupItem(
-                                    [dcc.Dropdown(id='nb-prior',
-                                        options=[
-                                            {'label': 'Fit prior', 'value': 'true'},
-                                            {'label': 'Uniform Prior', 'value': 'false'}],
-                                        multi=True,
-                                        placeholder="Prior",
-                                    )]),
-                            ])
-                    ],
-                    id='nb-params', style={'display':'none'},
-                    ),
-            dbc.Button("Run GridSearch", id='submit-button', color="danger", disabled=True),
-
-        ], width=4),
+                                        placeholder='C')]
+                                    ),
+                                ])
+                        ],
+                        id='svc-params', style={'display':'none'},
+                        ),
+                #Naive Bayes Params
+                dbc.Card(children=[
+                            dbc.CardHeader('Naive Bayes Parameters'),
+                            dbc.ListGroup(
+                                [
+                                    dbc.ListGroupItem(
+                                        [dcc.Dropdown(id='nb-alpha',
+                                            options=[
+                                                {'label': 'No smoothing', 'value': 0},
+                                                {'label': 'Laplacian smoothing', 'value': 1}],
+                                            multi=True,
+                                            placeholder='Smoothing'
+                                        )]),
+                                    dbc.ListGroupItem(
+                                        [dcc.Dropdown(id='nb-prior',
+                                            options=[
+                                                {'label': 'Fit prior', 'value': 'true'},
+                                                {'label': 'Uniform Prior', 'value': 'false'}],
+                                            multi=True,
+                                            placeholder="Prior",
+                                        )]),
+                                ])
+                        ],
+                        id='nb-params', style={'display':'none'},
+                        ),
+                dbc.Button("Run GridSearch", id='submit-button', color="danger", disabled=True),
+            ]), #<!-- /card -->
+        ], width=4), #<!-- /col -->
     ]),
     dbc.Row(id='result-table-area'),
 ]),
@@ -327,7 +329,8 @@ def update_plot(gg_otu, gg_taxa, refseq_otu, refseq_taxa, dataname):
                 style_cell={'textAlign':'center'},
                 style_header={
                     'backgroundColor': format[1],
-                    'fontWeight': 'bold'
+                    'fontWeight': 'bold',
+                    'color': 'white',
                 },
 
             ))
@@ -358,9 +361,12 @@ def enable_n_features(value):
     Output('submit-button', 'disabled'),
     [Input('models-select', 'value'),
     Input('feature-selection', 'value'),
-    Input('n-features', 'value')]
+    Input('n-features', 'value'),
+    State('summary-dataset-dropdown', 'value')]
 )
-def enable_submit(model, select, n_features):
+def enable_submit(model, select, n_features, dataset):
+    if not dataset:
+        return True
     if model:
         if not select:
             return False

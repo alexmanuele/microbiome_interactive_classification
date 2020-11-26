@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import GridSearchCV
 
@@ -107,7 +107,7 @@ page2_layout = dbc.Container(fluid=True,children=[
                          options=[
                             {'label': "Random Forest", 'value':'RF'},
                             {'label': "Naive Bayes", 'value': 'NB'},
-                            {'label': "LinearSVM", 'value': 'SVM'}
+                            {'label': "Support Vector Machine", 'value': 'SVM'}
                          ],
                          multi=True,
                          placeholder="Select models",
@@ -146,20 +146,14 @@ page2_layout = dbc.Container(fluid=True,children=[
                         dbc.ListGroup(
                             [
                                 dbc.ListGroupItem(
-                                    [dcc.Dropdown(id='svc-penalty',
+                                    [dcc.Dropdown(id='svc-kernel',
                                         options=[
-                                            {'label': 'L1', 'value':'l1'},
-                                            {'label': 'L2', 'value': 'l2'}],
+                                            {'label': 'Linear', 'value':'linear'},
+                                            {'label': 'Polynomial', 'value': 'poly'},
+                                            {'label':'Radial Basis Function', 'value':'rbf'},
+                                            {'label':'Sigmoid', 'value': 'sigmoid'}, ],
                                         multi=True,
-                                        placeholder='Criteria'
-                                    )]),
-                                dbc.ListGroupItem(
-                                    [dcc.Dropdown(id='svc-loss',
-                                        options=[
-                                            {'label': 'Hinge', 'value':'hinge'},
-                                            {'label': 'Squared Hinge', 'value': 'squared_hinge'}],
-                                        multi=True,
-                                        placeholder='Loss'
+                                        placeholder='Kernel'
                                     )]),
                                 dbc.ListGroupItem(
                                     [dcc.Dropdown(id='svc-c',
@@ -395,8 +389,7 @@ def render_tab_content(active_tab, data):
     State('rf-criterion', 'value'),
     State('rf-n-estimators', 'value'),
     #svm params
-    State('svc-penalty', 'value'),
-    State('svc-loss', 'value'),
+    State('svc-kernel', 'value'),
     State('svc-c', 'value'),
     #NB params
     State('nb-alpha', 'value'),
@@ -412,7 +405,7 @@ def render_tab_content(active_tab, data):
     State('refseq-taxa-slider', 'value')]
 )
 def run_grid_search(click, models, rf_criterion, rf_n_estimators,
-    svc_penalty, svc_loss, svc_c,
+    svc_kernel, svc_c,
     nb_alpha, nb_prior,
     feature_selection, n_features,
     dataset_sel, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff):
@@ -425,15 +418,14 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
     #Lookup dict to group inputs to their relevant models.
     input_dict = {'RF': {'criterion': rf_criterion,
                          'n_estimators':rf_n_estimators},
-                  'SVM': {'penalty': svc_penalty,
-                          'loss': svc_loss,
+                  'SVM': {'kernel': svc_kernel,
                           'C': svc_c,},
                   'NB': {'alpha': nb_alpha,
-                         'prior': nb_prior,}}
+                         'fit_prior': nb_prior,}}
 
 
     model_dict = {'RF': RandomForestClassifier,
-                  'SVM': LinearSVC,
+                  'SVM': SVC,
                   'NB': MultinomialNB}
     sel_models = {model: model_dict[model]() for model in models}
     #The param dict will contain all the default values for the selected models.

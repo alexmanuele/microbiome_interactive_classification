@@ -178,7 +178,12 @@ class PipelineHelper:
                 rows.append((row(k, s, p)))
 
         df = pd.concat(rows, axis=1).T.sort_values([sort_by], ascending=False)
-
+        #round all the columns.
+        for col in df.columns:
+            try:
+                df[col] = df[col].astype(float).round(3)
+            except:
+                continue
         columns = ['estimator', 'min_score', 'mean_score', 'max_score', 'std_score']
         columns = columns + [c for c in df.columns if c not in columns]
 

@@ -42,16 +42,19 @@ app.layout = html.Div([
     dbc.Row(id='data-sliders',children=[
         dbc.Col([
             dcc.Graph(id='feature-boxplot'),
-            html.H5('Use sliders to remove features based on their frequencies.'),
-            dbc.Label("Greengenes OTU"),
-            dcc.RangeSlider(id='gg-otu-slider', allowCross=False, tooltip={'placement': "top"}, disabled=True),
-            dbc.Label("Greengenes Taxa"),
-            dcc.RangeSlider(id='gg-taxa-slider', allowCross=False,tooltip={'placement': "top"},disabled=True),
-            dbc.Label('Refseq OTU'),
-            dcc.RangeSlider(id='refseq-otu-slider', allowCross=False, tooltip={'placement': "top"},disabled=True),
-            dbc.Label('Refseq Taxa'),
-            dcc.RangeSlider(id='refseq-taxa-slider', allowCross=False,tooltip={'placement': "top"},disabled=True),
-
+            dbc.Row([
+                dbc.Col([
+                    html.H5('Use sliders to remove features based on their frequencies.'),
+                    dbc.Label("Greengenes OTU"),
+                    dcc.RangeSlider(id='gg-otu-slider', allowCross=False, tooltip={'placement': "top"}, disabled=True),
+                    dbc.Label("Greengenes Taxa"),
+                    dcc.RangeSlider(id='gg-taxa-slider', allowCross=False,tooltip={'placement': "top"},disabled=True),
+                    dbc.Label('Refseq OTU'),
+                    dcc.RangeSlider(id='refseq-otu-slider', allowCross=False, tooltip={'placement': "top"},disabled=True),
+                    dbc.Label('Refseq Taxa'),
+                    dcc.RangeSlider(id='refseq-taxa-slider', allowCross=False,tooltip={'placement': "top"},disabled=True),
+                ],className='pl-5 pr-5'),
+            ],),
         ]),
     ]),
     html.Div(id='page-content'),
@@ -111,7 +114,7 @@ page1_layout = dbc.Container(fluid=True,children=[
         dbc.Col(id='taxa-gg-table', width=3,),
         dbc.Col(id='otu-refseq-table',width=3,),
         dbc.Col(id='taxa-refseq-table',width=3),
-    ]),
+    ],className="pl-5 pr-5"),
 
 ])
 ### Machine Learning Layout ###
@@ -251,7 +254,7 @@ page2_layout = dbc.Container(fluid=True,children=[
             ]), #<!-- /card -->
         ], width=4), #<!-- /col -->
     ]),
-    dbc.Row(id='result-table-area'),
+    dbc.Row(id='result-table-area', className='pl-5 pr-5'),
 ]),
 
 

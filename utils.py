@@ -181,6 +181,9 @@ def get_all_results(models, params, dataset):
         clf_results["{}_{}".format(*feature_rep)] = gridsearch
     return clf_results
 
+###############################################################################
+### Plotting utils                                                          ###
+###############################################################################
 def bar_plot_best(results):
     x = []
     y = []
@@ -200,4 +203,50 @@ def bar_plot_best(results):
         hovertext.append(desc_str)
         error_y.append(description['std_score'])
     fig = go.Figure(data=[go.Bar(x=x, y=y, hovertext=hovertext, error_y=dict(array=error_y), marker_color=colors)])
+    fig.update_layout(title_text="Best Results from GridSearch per Representation",
+                 xaxis_title='Feature Representation',
+                 yaxis_title='Accuracy')
+    return fig
+
+
+def scatter_plot(results):
+    i = 1
+    color_dict = {'greengenes_otu':'#636EFA',
+                  'greengenes_taxa':'#EF553B',
+                  'refseq_otu': '#00CC96',
+                  'refseq_taxa':'#AB63FA'}
+
+    fig = go.Figure()
+    for trial in results:
+        x = []
+        y = []
+        hovertext= []
+        error_y = []
+        colors = []
+
+        clf = results[trial]
+        df = clf.score_summary()
+        for j, row in df.iterrows():
+            description = row.dropna().to_dict()
+            desc_str = ""
+            for key, value in description.items():
+                desc_str += "{} : {}</br>".format(key, value)
+            x.append(i)
+            i+=1
+            y.append(description['mean_score'])
+            hovertext.append(desc_str)
+            error_y.append(description['std_score'])
+            colors.append(color_dict[trial])
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=y,
+                error_y=dict(array=error_y, color=color_dict[trial]),
+                hovertext=hovertext,
+                marker_color=colors,
+                mode='markers'
+            ))
+    fig.update_layout(title_text='All Results from GridSearch',
+                      xaxis_title='Instance',
+                       yaxis_title='Accuracy')
     return fig

@@ -35,11 +35,8 @@ datasets = {path: load_dataset(path) for path in data_paths}
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     #Stores for data persistence.
-    dcc.Store(id='selected-dataset', storage_type='session'),
-    dcc.Store(id='slider-values', storage_type='session'),
+    dcc.Store(id='graph-store'),
 
-    #html.Div(id='selected-dataset', style={'display':'none'}),
-    #html.Div(id='slider-values', style={'display':'none'}),
     make_navbar(active=0),
     make_dataset_dropdown(id='summary-dataset-dropdown'),
     dbc.Row(id='data-sliders',children=[
@@ -74,7 +71,19 @@ page1_layout = dbc.Container(fluid=True,children=[
 page2_layout = dbc.Container(fluid=True,children=[
     dbc.Row([
         #Machine Learning Results Area
-        dbc.Col(children=[dcc.Graph(id='ml-graph-area')], width=8),
+        dbc.Col(children=[
+            dbc.Tabs(
+                [
+                    dbc.Tab(label="Best", tab_id='bar'),
+                    dbc.Tab(label='All', tab_id='scatter')
+                    #    dcc.Graph(id='ml-graph-area')],
+                ],
+                id='tabs',
+                active_tab='bar'
+            ),
+            html.Div(id='tab-content')
+            ],
+            width=8),
         #Machine Learning Params Area
         dbc.Col(children=[
             dcc.Dropdown(id='feature-selection',
@@ -358,10 +367,26 @@ def manage_param_fields(value):
             vals[2] = {'display':'block'}
     return vals
 
+### Tab navigation ###
+#...navigates tabs.
+@app.callback(
+    Output('tab-content', 'children'),
+    [Input('tabs', 'active_tab'),
+    Input('graph-store', 'data')]
+)
+def render_tab_content(active_tab, data):
+    # render stored graphs in tabs.
+    if active_tab and data is not None:
+        if active_tab == "bar":
+            return dcc.Graph(figure=data['bar'])
+        elif active_tab == 'scatter':
+            return dcc.Graph(figure=data['scatter'])
+    return "No plot selected."
 ### Compute Classification ###
 # Compute classification, create the resultant figures, and serialize them.
 @app.callback(
-    [Output('ml-graph-area', 'figure'),
+    [#Output('ml-graph-area', 'figure'),
+    Output('graph-store', 'data'),
     Output('result-table-area', 'children')],
     [Input('submit-button', 'n_clicks'),
     #models
@@ -393,7 +418,7 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
     dataset_sel, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff):
     #Leave graph empty if no submit button.
     if not click:
-        return {}, []
+        return {k: go.Figure(data=[]) for k in ['bar', 'scatter']}, []
     #cast types for nb_prior, which is currently JS typed.
     if nb_prior:
         nb_prior = [True if e=='true' else False for e in nb_prior]
@@ -469,10 +494,10 @@ def run_grid_search(click, models, rf_criterion, rf_n_estimators,
             },]
     )
     #Send result data.
-    bar_plot = bar_plot_best(results)
-
+    bar = bar_plot_best(results)
+    scatter = scatter_plot(results)
     #soon: make the params a thing.
-    return bar_plot, table
+    return {'bar':bar, 'scatter':scatter}, table
 
 
 """

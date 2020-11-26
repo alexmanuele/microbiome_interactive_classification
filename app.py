@@ -62,21 +62,40 @@ app.layout = html.Div([
 landing_page_layout = [
     html.Div(className="position-relative overflow-hidden p-3 p-md-5 m-md-3 text-center bg-light",children=[
         html.Div(className="col-md-5 p-lg-5 mx-auto my-5", children=[
-            html.H1('This is the title.', className="display-4 font-weight-normal"),
-            html.P("This is the description", className='lead font-weight-normal'),
+            html.H1('Vizomics', className="display-4 font-weight-normal"),
+            html.P("Explore machine learning over microbiome datasets with no programming.", className='lead font-weight-normal'),
+            html.A('Get Started', href='page-1', className='btn btn-outline-secondary'),
         ])
     ]),
     html.Div(className="d-md-flex flex-md-equal w-100 my-md-3 pl-md-3",children=[
         html.Div(className="bg-dark mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center text-white overflow-hidden",children=[
             html.Div(className="my-3 py-3", children=[
-                html.H2('This is the subtitle.', className='display-5'),
-                html.P('This is the sub description.', className='lead'),
+                html.H2('Explore several datasets.', className='display-5'),
+                html.P(children=["Select one of multiple amplicon sequence datasets from Knight et al.'s ",
+                                 html.A("Machine Learning for Microbiome Repo.", href="https://knights-lab.github.io/MLRepo/", className='font-weight-bold text-white'),
+                                 ], className='lead'),
             ])
         ]),
         html.Div(className="bg-light mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden",children=[
             html.Div(className="my-3 py-3", children=[
-                html.H2("The other Subtitle", className="display-5"),
-                html.P('This is the sub description.', className='lead'),
+                html.H2("Visually remove outliers.", className="display-5"),
+                html.P('Interactive preprocessing allows you to filter out features based on their frequency. See in real time how changes in frequency bounds affect data distributions.', className='lead'),
+
+            ])
+        ])
+    ]),
+    html.Div(className="d-md-flex flex-md-equal w-100 my-md-3 pl-md-3",children=[
+        html.Div(className="bg-light mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden",children=[
+            html.Div(className="my-3 py-3", children=[
+                html.H2('Compare feature representations.', className='display-5'),
+                html.P("Investigate the impact of reference database and taxonomic assignment. Automatically find results for both OTUs and Taxa picked from Greengenes and Refseq.", className='lead'),
+            ])
+        ]),
+        html.Div(className="bg-primary mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center text-white overflow-hidden",children=[
+            html.Div(className="my-3 py-3", children=[
+                html.H2("Automatically find the best model.", className="display-5"),
+                html.P('Use the UI to specify which models and parameters to test. Explore model performances for each feature representation using both tables and graphs.', className='lead'),
+
             ])
         ])
     ]),
@@ -103,7 +122,7 @@ page2_layout = dbc.Container(fluid=True,children=[
             dbc.Tabs(
                 [
                     dbc.Tab(label="Best", tab_id='bar'),
-                    dbc.Tab(label='All', tab_id='scatter')
+                    dbc.Tab(label='All', tab_id='scatter'),
                     #    dcc.Graph(id='ml-graph-area')],
                 ],
                 id='tabs',

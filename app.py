@@ -1,15 +1,23 @@
-import dash
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
+
+import dash
 from dash.dependencies import Output, Input, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 
+import plotly.graph_objects as go
+import plotly.express as px
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import LinearSVC
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import GridSearchCV
+
 from components import *
 from utils import *
+
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],suppress_callback_exceptions=True)
 
 #Update here if you add more datasets.
@@ -26,6 +34,7 @@ app.layout = html.Div([
     #Stores for data persistence.
     dcc.Store(id='selected-dataset', storage_type='session'),
     dcc.Store(id='slider-values', storage_type='session'),
+
     #html.Div(id='selected-dataset', style={'display':'none'}),
     #html.Div(id='slider-values', style={'display':'none'}),
     make_navbar(active=0),
@@ -60,9 +69,133 @@ page1_layout = dbc.Container(fluid=True,children=[
 ])
 ### Machine Learning Layout ###
 page2_layout = dbc.Container(fluid=True,children=[
-    html.H3('App 2'),
-    html.Div(id='app-2-display-value'),
-    dcc.Link('Go to App 1', href='/apps/app1')
+    dbc.Row([
+        #Machine Learning Results Area
+        dbc.Col(children=[dcc.Graph(id='ml-graph-area')], width=8),
+        #Machine Learning Params Area
+        dbc.Col(children=[
+            dcc.Dropdown(id='feature-selection',
+                        options=[
+                            {'label': "Chi2 Information Test", 'value':'chi2'},
+                            {'label': "Mutual Information (Entropy)", 'value': "mi"}
+                        ],
+                        multi=False,
+                        placeholder="Choose feature selection algorithm or leave blank for none"
+            ),
+            dbc.Input(
+                id='n-features',
+                type='number',
+                min=1,
+                max=100,
+                step=1,
+                disabled=True,
+                placeholder="N features"
+            ),
+            dcc.Dropdown(id='models-select',
+                         options=[
+                            {'label': "Random Forest", 'value':'RF'},
+                            {'label': "Naive Bayes", 'value': 'NB'},
+                            {'label': "LinearSVM", 'value': 'SVM'}
+                         ],
+                         multi=True,
+                         placeholder="Select models",
+            ),
+            #Ranfom Forest Params
+            dbc.Card(children=[
+                        dbc.CardHeader('Random Forest Parameters'),
+                        dbc.ListGroup(
+                            [
+                                dbc.ListGroupItem(
+                                    [dcc.Dropdown(id='rf-criterion',
+                                        options=[
+                                            {'label': 'Gini Impurity', 'value':'gini'},
+                                            {'label': 'Entropy', 'value': 'entropy'}],
+                                        multi=True,
+                                        placeholder='Criteria'
+                                    )]),
+                                dbc.ListGroupItem(
+                                    [dcc.Dropdown(id='rf-n-estimators',
+                                    options=[
+                                        {'label': '10', 'value': 10},
+                                        {'label': '50', 'value': 50},
+                                        {'label': '100', 'value': 100},
+                                        {'label': '500', 'value': 500},
+                                    ],
+                                    multi=True,
+                                    placeholder='N Estimators')]
+                                ),
+                            ])
+                    ],
+                    id='rf-params', style={'display':'none'},
+                    ),
+            #SVC Params
+            dbc.Card(children=[
+                        dbc.CardHeader('SVC Parameters'),
+                        dbc.ListGroup(
+                            [
+                                dbc.ListGroupItem(
+                                    [dcc.Dropdown(id='svc-penalty',
+                                        options=[
+                                            {'label': 'L1', 'value':'l1'},
+                                            {'label': 'L2', 'value': 'l2'}],
+                                        multi=True,
+                                        placeholder='Criteria'
+                                    )]),
+                                dbc.ListGroupItem(
+                                    [dcc.Dropdown(id='svc-loss',
+                                        options=[
+                                            {'label': 'Hinge', 'value':'hinge'},
+                                            {'label': 'Squared Hinge', 'value': 'squared_hinge'}],
+                                        multi=True,
+                                        placeholder='Loss'
+                                    )]),
+                                dbc.ListGroupItem(
+                                    [dcc.Dropdown(id='svc-c',
+                                    options=[
+                                        {'label': '2^-3', 'value': 0.125},
+                                        {'label': '2^-2', 'value': 0.25},
+                                        {'label': '2^-1', 'value': 0.5},
+                                        {'label': '1', 'value': 1},
+                                        {'label': '2^2', 'value': 4},
+                                        {'label': '2^3', 'value': 8},
+                                        {'label': '2^4', 'value': 16},
+                                    ],
+                                    multi=True,
+                                    placeholder='C')]
+                                ),
+                            ])
+                    ],
+                    id='svc-params', style={'display':'none'},
+                    ),
+            #Naive Bayes Params
+            dbc.Card(children=[
+                        dbc.CardHeader('Naive Bayes Parameters'),
+                        dbc.ListGroup(
+                            [
+                                dbc.ListGroupItem(
+                                    [dcc.Dropdown(id='nb-alpha',
+                                        options=[
+                                            {'label': 'No smoothing', 'value': 0},
+                                            {'label': 'Laplacian smoothing', 'value': 1}],
+                                        multi=True,
+                                        placeholder='Smoothing'
+                                    )]),
+                                dbc.ListGroupItem(
+                                    [dcc.Dropdown(id='nb-prior',
+                                        options=[
+                                            {'label': 'Fit prior', 'value': 'true'},
+                                            {'label': 'Uniform Prior', 'value': 'false'}],
+                                        multi=True,
+                                        placeholder="Prior",
+                                    )]),
+                            ])
+                    ],
+                    id='nb-params', style={'display':'none'},
+                    ),
+            dbc.Button("Run GridSearch", id='submit-button', color="warning", disabled=True),
+
+        ], width=4),
+    ]),
 ])
 
 
@@ -141,6 +274,122 @@ def update_plot(gg_otu, gg_taxa, refseq_otu, refseq_taxa, dataname):
         fig.add_trace(go.Box(y=otu_refseq_ff, name='OTU Refseq'))
         fig.add_trace(go.Box(y=taxa_refseq_ff, name='Taxa Refseq'))
         return fig
+    return {}
+################################################################################
+### Machine learning callbacks                                               ###
+################################################################################
+
+### Feature selection: Enable N-features when model is chosen ###
+@app.callback(
+    Output('n-features', 'disabled'),
+    [Input('feature-selection', 'value')]
+)
+def enable_n_features(value):
+    if value:
+        return False
+    return True
+
+### Enable submit button ###
+# If feature selection specificed, must have n-features specified.
+# Model by itself is fine
+@app.callback(
+    Output('submit-button', 'disabled'),
+    [Input('models-select', 'value'),
+    Input('feature-selection', 'value'),
+    Input('n-features', 'value')]
+)
+def enable_submit(model, select, n_features):
+    if model:
+        if not select:
+            return False
+        if not n_features:
+            return True
+        return False
+    return True
+
+
+### Dynamic param selection ###
+# Display model params if they are selected.
+@app.callback(
+    [Output('svc-params', 'style'),
+    Output('rf-params', 'style'),
+    Output('nb-params', 'style')],
+    [Input('models-select', 'value')]
+)
+def manage_param_fields(value):
+    vals = [{'display': 'none'},{'display': 'none'},{'display': 'none'}]
+    if value:
+        if 'SVM' in value:
+            vals[0] = {'display': 'block'}
+        if "RF" in value:
+            vals[1] = {'display':'block'}
+        if 'NB' in value:
+            vals[2] = {'display':'block'}
+    return vals
+
+### Compute Classification ###
+# Compute classification, create the resultant figures, and serialize them.
+@app.callback(
+    Output('ml-graph-area', 'figure'),
+    [Input('submit-button', 'n_clicks'),
+    #models
+    State('models-select', 'value'),
+    #rf params
+    State('rf-criterion', 'value'),
+    State('rf-n-estimators', 'value'),
+    #svm params
+    State('svc-penalty', 'value'),
+    State('svc-loss', 'value'),
+    State('svc-c', 'value'),
+    #NB params
+    State('nb-alpha', 'value'),
+    State('nb-prior', 'value'),
+    #Feature selection params
+    State('feature-selection', 'value'),
+    State('n-features', 'value'),
+    #Selected dataset and features
+    State('selected-dataset', 'value'),
+    State('gg-otu-slider', 'value'),
+    State('gg-taxa-slider', 'value'),
+    State('refseq-otu-slider', 'value'),
+    State('refseq-taxa-slider', 'value')]
+)
+def run_grid_search(click, models, rf_criterion, rf_n_estimators,
+    svc_penalty, svc_loss, svc_c,
+    nb_alpha, nb_prior,
+    feature_selection, n_features,
+    dataset, gg_otu_ff, gg_taxa_ff, rf_otu_ff, rf_taxa_ff):
+    #Leave graph empty if no submit button.
+    if not click:
+        return {}
+    #cast types for nb_prior, which is currently JS typed.
+    if nb_prior:
+        nb_prior = [True if e=='true' else False for e in nb_prior]
+    #Lookup dict to group inputs to their relevant models.
+    input_dict = {'RF': {'criterion': rf_criterion,
+                         'n_estimators':rf_n_estimators},
+                  'SVM': {'penalty': svc_penalty,
+                          'loss': svc_loss,
+                          'C': svc_c,},
+                  'NB': {'alpha': nb_alpha,
+                         'prior': nb_prior,}}
+
+
+    model_dict = {'RF': RandomForestClassifier,
+                  'SVM': LinearSVC,
+                  'NB': MultinomialNB}
+    sel_models = {model: model_dict[model]() for model in models}
+    #The param dict will contain all the default values for the selected models.
+    params = {model: {k:[v] for k, v in sel_models[model].get_params().items()} for model in models}
+    # If user specified params, replace the defaults
+    for key in input_dict.keys():
+        if key in params.keys():
+            for param, value in input_dict[key].items():
+                if value:
+                    params[key][param] = value
+    
+
+    #soon: make the params a thing.
     return {}
 
 ################################################################################

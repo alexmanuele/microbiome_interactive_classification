@@ -4,7 +4,7 @@ The tool allows you to visually select features based on their abundances. After
 After selecting features, you can proceed to the Classification page. This page allows you to select from a number of common machine learning models and specify which of their parameters to include in a grid search. The app will automatically perform an exhaustive cross vlaidated search of the parameter space and report the resutls in both table and graph format. This will allow you to identify the best models and best feature representations for each dataset.
 <br>
 # Installation
-In progress. Install insturctions do not currently include requirements management. Check back.<br>
+In progress. Currently, installation requires Anaconda or miniconda. Check back for pip instructions<br>
 For now:<br>
 
 ```
@@ -12,6 +12,9 @@ git clone https://github.com/alexmanuele/microbiome_interactive_classification.g
 ```
 ```
 cd microbiome_interactive_classification
+```
+```
+conda env create -f environment.yml && conda activate vizomics
 ```
 ```
 chmod +x get_data.sh && get_data.sh 

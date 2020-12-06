@@ -335,7 +335,7 @@ def update_plot(gg_otu, gg_taxa, refseq_otu, refseq_taxa, dataname):
         fig.add_trace(go.Box(y=taxa_gg_ff, name='Taxa Greengenes'))
         fig.add_trace(go.Box(y=otu_refseq_ff, name='OTU Refseq'))
         fig.add_trace(go.Box(y=taxa_refseq_ff, name='Taxa Refseq'))
-
+        fig.update_layout(yaxis_title='Feature Frequency')
         #tables
         table_formats = [(otu_gg_stats, '#636EFA'),
                          (taxa_gg_stats, '#EF553B'),
@@ -581,4 +581,4 @@ def display_page(pathname):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)

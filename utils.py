@@ -263,7 +263,8 @@ def scatter_plot(results):
                 error_y=dict(array=error_y, color=color_dict[trial]),
                 hovertext=hovertext,
                 marker_color=colors,
-                mode='markers'
+                mode='markers',
+                name=trial
             ))
     fig.update_layout(title_text='All Results from GridSearch',
                       xaxis_title='Instance',
